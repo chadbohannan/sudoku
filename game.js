@@ -313,6 +313,11 @@ class SudokuGame {
             // In normal mode, clear notes and place the number
             delete this.notes[this.selectedCell];
             this.board[this.selectedCell] = number === '' ? '.' : number;
+
+            // If a number was placed (not erased), eliminate it from related cells' notes
+            if (number !== '') {
+                this.eliminateNotesInRelatedCells(this.selectedCell, number);
+            }
         }
 
         this.renderBoard();
@@ -320,6 +325,36 @@ class SudokuGame {
 
         if (!this.noteMode && !this.board.includes('.')) {
             this.checkWin();
+        }
+    }
+
+    eliminateNotesInRelatedCells(cellIndex, number) {
+        const row = Math.floor(cellIndex / 9);
+        const col = cellIndex % 9;
+        const boxRow = Math.floor(row / 3) * 3;
+        const boxCol = Math.floor(col / 3) * 3;
+
+        // Check all cells and remove the number from notes if they're in the same row, column, or box
+        for (let i = 0; i < 81; i++) {
+            if (i === cellIndex) continue;
+
+            const cellRow = Math.floor(i / 9);
+            const cellCol = i % 9;
+            const cellBoxRow = Math.floor(cellRow / 3) * 3;
+            const cellBoxCol = Math.floor(cellCol / 3) * 3;
+
+            // Check if cell is in same row, column, or box
+            if (cellRow === row || cellCol === col ||
+                (cellBoxRow === boxRow && cellBoxCol === boxCol)) {
+
+                if (this.notes[i] && this.notes[i].has(number)) {
+                    this.notes[i].delete(number);
+                    // Clean up empty Sets
+                    if (this.notes[i].size === 0) {
+                        delete this.notes[i];
+                    }
+                }
+            }
         }
     }
 
