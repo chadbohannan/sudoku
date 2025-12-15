@@ -11,7 +11,61 @@ class SudokuGame {
 
         this.initializeBoard();
         this.attachEventListeners();
-        this.startNewGame();
+
+        // Try to load saved game, otherwise start new game
+        if (!this.loadGame()) {
+            this.startNewGame();
+        }
+    }
+
+    saveGame() {
+        const gameState = {
+            board: this.board,
+            solution: this.solution,
+            initialBoard: this.initialBoard,
+            notes: this.notes,
+            difficulty: this.difficulty,
+            selectedCell: this.selectedCell,
+            noteMode: this.noteMode
+        };
+        localStorage.setItem('sudokuGameState', JSON.stringify(gameState));
+    }
+
+    loadGame() {
+        try {
+            const savedState = localStorage.getItem('sudokuGameState');
+            if (!savedState) return false;
+
+            const gameState = JSON.parse(savedState);
+
+            // Validate saved state has required properties
+            if (!gameState.board || !gameState.solution || !gameState.initialBoard) {
+                return false;
+            }
+
+            this.board = gameState.board;
+            this.solution = gameState.solution;
+            this.initialBoard = gameState.initialBoard;
+            this.notes = gameState.notes || {};
+            this.difficulty = gameState.difficulty || 'medium';
+            this.selectedCell = gameState.selectedCell;
+            this.noteMode = gameState.noteMode || false;
+
+            // Update UI to match loaded state
+            document.getElementById('difficulty-select').value = this.difficulty;
+            document.getElementById('note-mode-toggle').checked = this.noteMode;
+            this.updateNumberPadStyle();
+
+            this.renderBoard();
+            return true;
+        } catch (error) {
+            console.error('Error loading saved game:', error);
+            return false;
+        }
+    }
+
+    clearSavedGame() {
+        localStorage.removeItem('sudokuGameState');
     }
 
     initializeBoard() {
@@ -34,11 +88,13 @@ class SudokuGame {
         document.getElementById('difficulty-select').addEventListener('change', (e) => {
             this.difficulty = e.target.value;
             this.updateDifficultyDisplay();
+            this.saveGame();
         });
 
         document.getElementById('note-mode-toggle').addEventListener('change', (e) => {
             this.noteMode = e.target.checked;
             this.updateNumberPadStyle();
+            this.saveGame();
         });
 
         document.querySelectorAll('.number-btn').forEach(btn => {
@@ -72,6 +128,7 @@ class SudokuGame {
         this.notes = {};
 
         this.renderBoard();
+        this.saveGame();
         this.showMessage('New game started! Good luck!', 'info');
         setTimeout(() => this.showMessage('', ''), 2000);
     }
@@ -116,6 +173,7 @@ class SudokuGame {
         this.selectedCell = index;
         cells[index].classList.add('selected');
         this.highlightRelatedCells(index);
+        this.saveGame();
     }
 
     highlightRelatedCells(index) {
@@ -170,6 +228,7 @@ class SudokuGame {
         }
 
         this.renderBoard();
+        this.saveGame();
 
         if (!this.noteMode && !this.board.includes('.')) {
             this.checkWin();
@@ -195,6 +254,7 @@ class SudokuGame {
         delete this.notes[randomIndex];
         this.selectCell(randomIndex);
         this.renderBoard();
+        this.saveGame();
 
         this.showMessage('Hint provided!', 'info');
         setTimeout(() => this.showMessage('', ''), 2000);
@@ -239,6 +299,7 @@ class SudokuGame {
 
         if (isCorrect) {
             this.showMessage('Congratulations! You solved it!', 'success');
+            this.clearSavedGame();
             this.celebrateWin();
         } else {
             this.showMessage('Puzzle complete, but some numbers are wrong. Try again!', 'error');
