@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background -->
+  <rect width="100" height="100" fill="#ffffff" rx="15"/>
+
+  <!-- 3x3 Sudoku grid -->
+  <!-- Outer border (thicker) -->
+  <rect x="15" y="15" width="70" height="70" fill="none" stroke="#000000" stroke-width="4" rx="3"/>
+
+  <!-- Vertical dividers (thinner for inner lines) -->
+  <line x1="38.33" y1="15" x2="38.33" y2="85" stroke="#000000" stroke-width="2"/>
+  <line x1="61.67" y1="15" x2="61.67" y2="85" stroke="#000000" stroke-width="2"/>
+
+  <!-- Horizontal dividers (thinner for inner lines) -->
+  <line x1="15" y1="38.33" x2="85" y2="38.33" stroke="#000000" stroke-width="2"/>
+  <line x1="15" y1="61.67" x2="85" y2="61.67" stroke="#000000" stroke-width="2"/>
+
+  <!-- Sample numbers in some cells to show it's Sudoku -->
+  <text x="27" y="33" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#000000" text-anchor="middle">5</text>
+  <text x="73" y="56" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#000000" text-anchor="middle">3</text>
+  <text x="50" y="79" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#000000" text-anchor="middle">7</text>
+</svg>
