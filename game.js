@@ -7,6 +7,7 @@ class SudokuGame {
         this.difficulty = 'medium';
         this.noteMode = false;
         this.notes = {};
+        this.fireworks = null;
 
         this.initializeBoard();
         this.attachEventListeners();
@@ -238,10 +239,69 @@ class SudokuGame {
 
         if (isCorrect) {
             this.showMessage('Congratulations! You solved it!', 'success');
+            this.celebrateWin();
         } else {
             this.showMessage('Puzzle complete, but some numbers are wrong. Try again!', 'error');
             setTimeout(() => this.showMessage('', ''), 3000);
         }
+    }
+
+    celebrateWin() {
+        const container = document.getElementById('fireworks-container');
+
+        // Show the fireworks container
+        container.classList.add('active');
+
+        // Initialize fireworks if not already done
+        if (!this.fireworks && window.Fireworks) {
+            this.fireworks = new window.Fireworks(container, {
+                rocketsPoint: {
+                    min: 0,
+                    max: 100
+                },
+                hue: {
+                    min: 0,
+                    max: 360
+                },
+                delay: {
+                    min: 15,
+                    max: 30
+                },
+                speed: 2,
+                acceleration: 1.05,
+                friction: 0.95,
+                gravity: 1.5,
+                particles: 90,
+                trace: 3,
+                explosion: 6,
+                autoresize: true,
+                brightness: {
+                    min: 50,
+                    max: 80
+                },
+                boundaries: {
+                    top: 50,
+                    bottom: container.clientHeight,
+                    left: 50,
+                    right: container.clientWidth
+                }
+            });
+        }
+
+        // Start the fireworks
+        if (this.fireworks) {
+            this.fireworks.start();
+        }
+
+        // After 5 seconds, fade out and stop
+        setTimeout(() => {
+            container.classList.remove('active');
+            setTimeout(() => {
+                if (this.fireworks) {
+                    this.fireworks.stop();
+                }
+            }, 500); // Wait for fade transition to complete
+        }, 5000);
     }
 
 
