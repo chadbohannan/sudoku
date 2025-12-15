@@ -19,11 +19,19 @@ class SudokuGame {
     }
 
     saveGame() {
+        // Convert notes Sets to arrays for JSON serialization
+        const notesForStorage = {};
+        for (const [key, value] of Object.entries(this.notes)) {
+            if (value instanceof Set) {
+                notesForStorage[key] = Array.from(value);
+            }
+        }
+
         const gameState = {
             board: this.board,
             solution: this.solution,
             initialBoard: this.initialBoard,
-            notes: this.notes,
+            notes: notesForStorage,
             difficulty: this.difficulty,
             selectedCell: this.selectedCell,
             noteMode: this.noteMode
@@ -46,7 +54,21 @@ class SudokuGame {
             this.board = gameState.board;
             this.solution = gameState.solution;
             this.initialBoard = gameState.initialBoard;
-            this.notes = gameState.notes || {};
+
+            // Convert notes from saved format (object with arrays) to Sets
+            this.notes = {};
+            if (gameState.notes) {
+                for (const [key, value] of Object.entries(gameState.notes)) {
+                    if (Array.isArray(value)) {
+                        // New format: array of numbers
+                        this.notes[key] = new Set(value);
+                    } else if (typeof value === 'string') {
+                        // Legacy format: single string value
+                        this.notes[key] = new Set([value]);
+                    }
+                }
+            }
+
             this.difficulty = gameState.difficulty || 'medium';
             this.selectedCell = gameState.selectedCell;
             this.noteMode = gameState.noteMode || false;
@@ -139,27 +161,76 @@ class SudokuGame {
         cells.forEach((cell, index) => {
             const value = this.board[index];
             const isGiven = this.initialBoard[index] !== '.';
-            const hasNote = this.notes[index];
+            const hasNotes = this.notes[index] && this.notes[index].size > 0;
 
             cell.classList.remove('given', 'user-input', 'note', 'error', 'correct', 'highlighted');
 
             if (isGiven) {
                 cell.textContent = value;
                 cell.classList.add('given');
-            } else if (hasNote) {
-                cell.textContent = hasNote;
+                cell.innerHTML = value; // Reset to text content
+            } else if (hasNotes) {
                 cell.classList.add('note');
+                cell.innerHTML = this.renderNotesGrid(this.notes[index]);
             } else if (value !== '.') {
                 cell.textContent = value;
                 cell.classList.add('user-input');
+                cell.innerHTML = value; // Reset to text content
             } else {
                 cell.textContent = '';
+                cell.innerHTML = '';
             }
         });
 
         if (this.selectedCell !== null) {
             this.highlightRelatedCells(this.selectedCell);
         }
+
+        // Update number button states
+        this.updateNumberButtonStates();
+    }
+
+    updateNumberButtonStates() {
+        // Count occurrences of each number on the board
+        const numberCounts = {};
+        for (let i = 1; i <= 9; i++) {
+            numberCounts[i] = 0;
+        }
+
+        this.board.forEach(value => {
+            if (value !== '.') {
+                numberCounts[value] = (numberCounts[value] || 0) + 1;
+            }
+        });
+
+        // Update button states
+        document.querySelectorAll('.number-btn').forEach(btn => {
+            const number = btn.dataset.number;
+            if (number && number !== '') {
+                if (numberCounts[number] >= 9) {
+                    btn.classList.add('completed');
+                } else {
+                    btn.classList.remove('completed');
+                }
+            }
+        });
+    }
+
+    renderNotesGrid(notesSet) {
+        // Create a 3x3 grid for notes (positions 1-9)
+        const grid = document.createElement('div');
+        grid.className = 'notes-grid';
+
+        for (let i = 1; i <= 9; i++) {
+            const noteCell = document.createElement('div');
+            noteCell.className = 'note-cell';
+            if (notesSet.has(String(i))) {
+                noteCell.textContent = i;
+            }
+            grid.appendChild(noteCell);
+        }
+
+        return grid.outerHTML;
     }
 
     selectCell(index) {
@@ -217,12 +288,29 @@ class SudokuGame {
 
         if (this.noteMode) {
             if (number === '') {
+                // Erase button clears all notes
                 delete this.notes[this.selectedCell];
             } else {
-                this.notes[this.selectedCell] = number;
+                // Toggle the note: add if not present, remove if present
+                if (!this.notes[this.selectedCell]) {
+                    this.notes[this.selectedCell] = new Set();
+                }
+
+                if (this.notes[this.selectedCell].has(number)) {
+                    this.notes[this.selectedCell].delete(number);
+                    // Clean up empty Sets
+                    if (this.notes[this.selectedCell].size === 0) {
+                        delete this.notes[this.selectedCell];
+                    }
+                } else {
+                    this.notes[this.selectedCell].add(number);
+                }
+
+                // Clear the actual value when adding notes
                 this.board[this.selectedCell] = '.';
             }
         } else {
+            // In normal mode, clear notes and place the number
             delete this.notes[this.selectedCell];
             this.board[this.selectedCell] = number === '' ? '.' : number;
         }
