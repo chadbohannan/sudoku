@@ -278,10 +278,6 @@ class SudokuGame {
     }
 
     selectCell(index) {
-        if (this.initialBoard[index] !== '.') {
-            return;
-        }
-
         const cells = document.querySelectorAll('.cell');
         cells.forEach(cell => cell.classList.remove('selected', 'highlighted'));
 
