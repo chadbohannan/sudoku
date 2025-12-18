@@ -45,8 +45,7 @@
                 <option value="easy">Easy</option>
                 <option value="medium" selected>Medium</option>
                 <option value="hard">Hard</option>
-                <option value="very-hard">Very Hard</option>
-                <option value="insane">Insane</option>
+                <option value="expert">Expert</option>
             </select>
             <button class="btn btn-primary" id="new-game-btn">New Game</button>
         </div>
@@ -56,9 +55,11 @@
 
     <script type="module">
         import { Fireworks } from 'https://cdn.jsdelivr.net/npm/fireworks-js@2.x/dist/index.es.js'
+        import { getSudoku } from 'https://cdn.jsdelivr.net/npm/sudoku-gen@1.0.2/+esm'
+
         window.Fireworks = Fireworks;
+        window.getSudoku = getSudoku;
     </script>
-    <script src="sudoku.js"></script>
     <script src="game.js"></script>
 </body>
 </html>

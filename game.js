@@ -69,7 +69,12 @@ class SudokuGame {
                 }
             }
 
-            this.difficulty = gameState.difficulty || 'medium';
+            // Load difficulty, defaulting to 'medium' for invalid/legacy values
+            const validDifficulties = ['easy', 'medium', 'hard', 'expert'];
+            this.difficulty = validDifficulties.includes(gameState.difficulty)
+                ? gameState.difficulty
+                : 'medium';
+
             this.selectedCell = gameState.selectedCell;
             this.noteMode = gameState.noteMode || false;
 
@@ -137,16 +142,18 @@ class SudokuGame {
     }
 
     startNewGame() {
-        if (typeof sudoku === 'undefined') {
+        if (typeof getSudoku === 'undefined') {
             this.showMessage('Loading game library...', 'info');
             setTimeout(() => this.startNewGame(), 500);
             return;
         }
 
-        const puzzleString = sudoku.generate(this.difficulty);
-        this.initialBoard = puzzleString;
-        this.board = puzzleString.split('');
-        this.solution = sudoku.solve(puzzleString).split('');
+        const result = getSudoku(this.difficulty);
+
+        // Convert '-' to '.' to match our format
+        this.initialBoard = result.puzzle.replace(/-/g, '.');
+        this.board = this.initialBoard.split('');
+        this.solution = result.solution.split('');
         this.notes = {};
 
         this.renderBoard();
@@ -176,6 +183,11 @@ class SudokuGame {
                 cell.textContent = value;
                 cell.classList.add('user-input');
                 cell.innerHTML = value; // Reset to text content
+
+                // Check for constraint violations
+                if (this.hasConstraintViolation(index)) {
+                    cell.classList.add('error');
+                }
             } else {
                 cell.textContent = '';
                 cell.innerHTML = '';
@@ -188,6 +200,38 @@ class SudokuGame {
 
         // Update number button states
         this.updateNumberButtonStates();
+    }
+
+    hasConstraintViolation(cellIndex) {
+        const value = this.board[cellIndex];
+        if (value === '.') return false;
+
+        const row = Math.floor(cellIndex / 9);
+        const col = cellIndex % 9;
+        const boxRow = Math.floor(row / 3) * 3;
+        const boxCol = Math.floor(col / 3) * 3;
+
+        // Check all cells for duplicates in row, column, or box
+        for (let i = 0; i < 81; i++) {
+            if (i === cellIndex) continue;
+
+            const cellRow = Math.floor(i / 9);
+            const cellCol = i % 9;
+            const cellBoxRow = Math.floor(cellRow / 3) * 3;
+            const cellBoxCol = Math.floor(cellCol / 3) * 3;
+
+            // Check if in same row, column, or box
+            if (cellRow === row || cellCol === col ||
+                (cellBoxRow === boxRow && cellBoxCol === boxCol)) {
+
+                // If same value found, it's a violation
+                if (this.board[i] === value) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     updateNumberButtonStates() {
@@ -288,8 +332,9 @@ class SudokuGame {
 
         if (this.noteMode) {
             if (number === '') {
-                // Erase button clears all notes
+                // Erase button clears all notes and the cell value
                 delete this.notes[this.selectedCell];
+                this.board[this.selectedCell] = '.';
             } else {
                 // Toggle the note: add if not present, remove if present
                 if (!this.notes[this.selectedCell]) {
