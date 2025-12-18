@@ -373,8 +373,13 @@ class SudokuGame {
         }
 
         const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        this.board[randomIndex] = this.solution[randomIndex];
+        const hintNumber = this.solution[randomIndex];
+        this.board[randomIndex] = hintNumber;
         delete this.notes[randomIndex];
+
+        // Eliminate the hint number from related cells' notes
+        this.eliminateNotesInRelatedCells(randomIndex, hintNumber);
+
         this.selectCell(randomIndex);
         this.renderBoard();
         this.saveGame();
