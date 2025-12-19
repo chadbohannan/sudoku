@@ -178,7 +178,7 @@ class SudokuGame {
                 cell.innerHTML = value; // Reset to text content
             } else if (hasNotes) {
                 cell.classList.add('note');
-                cell.innerHTML = this.renderNotesGrid(this.notes[index]);
+                cell.innerHTML = this.renderNotesGrid(this.notes[index], index);
             } else if (value !== '.') {
                 cell.textContent = value;
                 cell.classList.add('user-input');
@@ -260,7 +260,7 @@ class SudokuGame {
         });
     }
 
-    renderNotesGrid(notesSet) {
+    renderNotesGrid(notesSet, cellIndex) {
         // Create a 3x3 grid for notes (positions 1-9)
         const grid = document.createElement('div');
         grid.className = 'notes-grid';
@@ -270,11 +270,44 @@ class SudokuGame {
             noteCell.className = 'note-cell';
             if (notesSet.has(String(i))) {
                 noteCell.textContent = i;
+                // Check if this note number violates constraints
+                if (this.wouldViolateConstraint(cellIndex, String(i))) {
+                    noteCell.classList.add('invalid-note');
+                }
             }
             grid.appendChild(noteCell);
         }
 
         return grid.outerHTML;
+    }
+
+    wouldViolateConstraint(cellIndex, value) {
+        const row = Math.floor(cellIndex / 9);
+        const col = cellIndex % 9;
+        const boxRow = Math.floor(row / 3) * 3;
+        const boxCol = Math.floor(col / 3) * 3;
+
+        // Check all cells for the same value in row, column, or box
+        for (let i = 0; i < 81; i++) {
+            if (i === cellIndex) continue;
+
+            const cellRow = Math.floor(i / 9);
+            const cellCol = i % 9;
+            const cellBoxRow = Math.floor(cellRow / 3) * 3;
+            const cellBoxCol = Math.floor(cellCol / 3) * 3;
+
+            // Check if in same row, column, or box
+            if (cellRow === row || cellCol === col ||
+                (cellBoxRow === boxRow && cellBoxCol === boxCol)) {
+
+                // If same value found, it would violate
+                if (this.board[i] === value) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     selectCell(index) {
@@ -353,11 +386,17 @@ class SudokuGame {
         } else {
             // In normal mode, clear notes and place the number
             delete this.notes[this.selectedCell];
-            this.board[this.selectedCell] = number === '' ? '.' : number;
 
-            // If a number was placed (not erased), eliminate it from related cells' notes
-            if (number !== '') {
-                this.eliminateNotesInRelatedCells(this.selectedCell, number);
+            // Toggle: if cell already has this number, clear it instead
+            if (number !== '' && this.board[this.selectedCell] === number) {
+                this.board[this.selectedCell] = '.';
+            } else {
+                this.board[this.selectedCell] = number === '' ? '.' : number;
+
+                // If a number was placed (not erased), eliminate it from related cells' notes
+                if (number !== '') {
+                    this.eliminateNotesInRelatedCells(this.selectedCell, number);
+                }
             }
         }
 

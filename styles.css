@@ -112,6 +112,10 @@ body {
     line-height: 0.8;
 }
 
+.note-cell.invalid-note {
+    color: #cc0000;
+}
+
 .cell.selected {
     background: #ffd700;
 }
