@@ -8,6 +8,9 @@ class SudokuGame {
         this.noteMode = false;
         this.notes = {};
         this.fireworks = null;
+        this.lastTapTime = 0;
+        this.lastTapCell = null;
+        this.doubleTapDelay = 300; // milliseconds
 
         this.initializeBoard();
         this.attachEventListeners();
@@ -310,9 +313,42 @@ class SudokuGame {
         return false;
     }
 
+    getValidValuesForCell(cellIndex) {
+        // Returns a Set of all values (1-9) that don't violate constraints for this cell
+        const validValues = new Set();
+
+        for (let num = 1; num <= 9; num++) {
+            const numStr = String(num);
+            if (!this.wouldViolateConstraint(cellIndex, numStr)) {
+                validValues.add(numStr);
+            }
+        }
+
+        return validValues;
+    }
+
     selectCell(index) {
         const cells = document.querySelectorAll('.cell');
         cells.forEach(cell => cell.classList.remove('selected', 'highlighted'));
+
+        // Double-tap detection for auto-populating notes
+        const currentTime = Date.now();
+        const isDoubleTap = (currentTime - this.lastTapTime) < this.doubleTapDelay &&
+                            this.lastTapCell === index;
+
+        if (isDoubleTap && this.noteMode && this.initialBoard[index] === '.') {
+            // Auto-populate notes with valid values
+            const validValues = this.getValidValuesForCell(index);
+            if (validValues.size > 0) {
+                this.notes[index] = validValues;
+                this.board[index] = '.'; // Ensure cell is empty
+                this.renderBoard();
+                this.saveGame();
+            }
+        }
+
+        this.lastTapTime = currentTime;
+        this.lastTapCell = index;
 
         this.selectedCell = index;
         cells[index].classList.add('selected');
