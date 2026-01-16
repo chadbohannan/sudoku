@@ -117,7 +117,6 @@ class SudokuGame {
         document.getElementById('validate-btn').addEventListener('click', () => this.validateBoard());
         document.getElementById('difficulty-select').addEventListener('change', (e) => {
             this.difficulty = e.target.value;
-            this.updateDifficultyDisplay();
             this.saveGame();
         });
 
